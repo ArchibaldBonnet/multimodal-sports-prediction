@@ -1,0 +1,11 @@
+pandas
+numpy
+pyarrow
+pyyaml
+joblib
+requests
+python-dotenv
+scikit-learn
+torch
+transformers
+pytest

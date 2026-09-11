@@ -1,0 +1,38 @@
+# Canonical configuration — design decision (d).
+# The temporal split is defined ONCE, here, and consumed identically
+# by the sklearn baseline and the multimodal LSTM. Neither pipeline
+# is allowed to compute its own split.
+
+split:
+  train_before: "2023-01-01"   # train: all matches strictly before this date
+  val_year: 2023               # validation: full 2023 calendar year
+  test_years: [2024, 2025]     # test: 2024-2025 — the only years any reported metric may use
+
+paths:
+  raw_matches: "data/raw/matches_PL.csv"
+  raw_odds: "data/raw/odds_PL.csv"
+  raw_news: "data/raw/news.csv"
+  matches_canonical: "data/processed/matches.parquet"      # Phase 1 output
+  team_embeddings: "data/embeddings/team_embeddings.pt"    # Phase 3 output (static, per-team)
+  news_embeddings: "data/embeddings/news_embeddings.pt"    # Phase 3 output (dynamic, per-article)
+  dataset: "data/processed/dataset.parquet"                # Phase 3 output (single canonical dataset)
+
+models:
+  baseline:
+    output: "models/baseline.pkl"
+  lstm:
+    output: "models/lstm.pt"
+    sequence_length: 5
+    hidden_size: 64
+    num_layers: 2
+    loss_log: "reports/lstm_training_log.csv"   # real per-epoch loss, never handwritten
+
+evaluation:
+  output: "reports/log_loss_comparison.csv"
+
+backtesting:
+  initial_bankroll: 1000.0
+  kelly_fraction: 0.5
+  min_edge: 0.05
+  max_bet_pct: 0.10
+  output: "reports/bankroll_history.csv"

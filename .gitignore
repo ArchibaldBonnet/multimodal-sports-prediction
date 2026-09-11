@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+.DS_Store
+
+# large/generated artifacts — never committed, always reproducible via main.py
+data/raw/*
+data/processed/*
+data/embeddings/*
+models/*
+reports/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/embeddings/.gitkeep
+!models/.gitkeep
+!reports/.gitkeep
