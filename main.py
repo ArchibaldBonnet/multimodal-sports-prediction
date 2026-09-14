@@ -17,30 +17,41 @@ prevent.
 """
 import argparse
 import sys
-
+import os
+from dotenv import load_dotenv
+from src.mmsp.fetch import fetch_premier_league_data
+from src.mmsp.data.build import build_canonical_dataset
+from src.mmsp.models.baseline import train_sklearn_baseline
+from src.mmsp.models.lstm import train_multimodal_lstm
+from src.mmsp.models.evaluate import run_evaluation
+from src.mmsp.models.backtesting import run_financial_backtest
 
 def cmd_fetch(args):
-    raise NotImplementedError("fetch: implemented in Phase 1 (ingestion + canonical key)")
+    load_dotenv()  # Charge votre .env contenant FOOTBALL_DATA_API_KEY
+    print("Démarrage de la Phase 1 : Récupération des données...")
+    fetch_premier_league_data()
 
 
 def cmd_build_features(args):
-    raise NotImplementedError("build-features: implemented in Phase 2/3 (tabular features + embeddings)")
+    print("Lancement du nouveau pipeline CSV...")
+    build_canonical_dataset()
 
 
 def cmd_train_baseline(args):
-    raise NotImplementedError("train-baseline: implemented in Phase 4 (sklearn baseline)")
+    print("Démarrage de la Phase 4 : Entraînement de la Sklearn Baseline...")
+    train_sklearn_baseline()
 
 
 def cmd_train_lstm(args):
-    raise NotImplementedError("train-lstm: implemented in Phase 5 (multimodal LSTM)")
+    train_multimodal_lstm()
 
 
 def cmd_evaluate(args):
-    raise NotImplementedError("evaluate: implemented in Phase 6 (real evaluation)")
+    run_evaluation()
 
 
 def cmd_backtest(args):
-    raise NotImplementedError("backtest: implemented in Phase 7 (connected backtesting)")
+    run_financial_backtest()
 
 
 def build_parser() -> argparse.ArgumentParser:
