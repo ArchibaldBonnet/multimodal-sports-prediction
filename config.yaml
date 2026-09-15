@@ -1,7 +1,6 @@
 # Canonical configuration — design decision (d).
 # The temporal split is defined ONCE, here, and consumed identically
-# by the sklearn baseline and the multimodal LSTM. Neither pipeline
-# is allowed to compute its own split.
+# by the sklearn baseline and the multimodal LSTM.
 
 split:
   method: "sequential"
@@ -12,10 +11,10 @@ paths:
   raw_matches: "data/raw/matches_PL.csv"
   raw_odds: "data/raw/odds_PL.csv"
   raw_news: "data/raw/news.csv"
-  matches_canonical: "data/processed/matches.parquet"      # Phase 1 output
-  team_embeddings: "data/embeddings/team_embeddings.pt"    # Phase 3 output (static, per-team)
-  news_embeddings: "data/embeddings/news_embeddings.pt"    # Phase 3 output (dynamic, per-article)
-  dataset: "data/processed/dataset.parquet"                # Phase 3 output (single canonical dataset)
+  matches_canonical: "data/processed/matches.parquet"      
+  team_embeddings: "data/embeddings/team_embeddings.pt"    
+  news_embeddings: "data/embeddings/news_embeddings.pt"    
+  dataset: "data/processed/dataset.parquet"                
 
 models:
   baseline:
@@ -25,14 +24,14 @@ models:
     sequence_length: 5
     hidden_size: 64
     num_layers: 2
-    loss_log: "reports/lstm_training_log.csv"   # real per-epoch loss, never handwritten
+    loss_log: "reports/lstm_training_log.csv"   
 
 evaluation:
   output: "reports/log_loss_comparison.csv"
 
 backtesting:
   initial_bankroll: 1000.0
-  kelly_fraction: 0.5
-  min_edge: 0.05
-  max_bet_pct: 0.10
-  output: "reports/bankroll_history.csv"
+  kelly_fraction: 4.0
+  min_edge: 0.00
+  max_bet_pct: 0.25
+  output: "reports/matched_bets_log.csv"
