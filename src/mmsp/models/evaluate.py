@@ -34,54 +34,46 @@ def get_prepared_data():
         y[:split_idx], y[split_idx:]
     )
 
-def train_eval_lstm(X_tab_train, X_tab_test, X_text_train, X_text_test, y_train, y_test, use_text=True):
-    if not use_text:
-        X_text_train = torch.zeros((X_text_train.shape[0], 1))
-        X_text_test = torch.zeros((X_text_test.shape[0], 1))
-        text_dim = 1
-    else:
-        text_dim = X_text_train.shape[1]
-
-    model = MultimodalNet(tabular_dim=12, text_dim=text_dim)
+def train_multimodal_lstm(model, X_tab_train, X_text_train, y_train, X_tab_test, X_text_test, y_test):
     criterion = nn.CrossEntropyLoss()
     
-    # Ajout du Weight Decay (régularisation L2) pour contrer l'overfitting
+    # 1. Weight Decay : pénalité L2 pour lisser les prédictions
     optimizer = optim.Adam(model.parameters(), lr=0.003, weight_decay=1e-3)
     
     best_test_loss = float('inf')
-    patience = 15          # Nombre d'époques tolérées sans amélioration
+    patience = 10 
     patience_counter = 0
     best_weights = None
 
     for epoch in range(150):
-        # 1. Apprentissage
+        # Mode entraînement
         model.train()
         optimizer.zero_grad()
         loss = criterion(model(X_tab_train, X_text_train), y_train)
         loss.backward()
         optimizer.step()
         
-        # 2. Évaluation
+        # Mode évaluation
         model.eval()
         with torch.no_grad():
             test_loss = criterion(model(X_tab_test, X_text_test), y_test).item()
             
-        # 3. Early Stopping & Checkpoint
+        # 2. Early Stopping : on sauvegarde le meilleur modèle
         if test_loss < best_test_loss:
             best_test_loss = test_loss
             patience_counter = 0
-            best_weights = model.state_dict().copy() # Sauvegarde des meilleurs poids
+            best_weights = model.state_dict().copy()
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                # Arrêt anticipé avant que la courbe orange ne s'envole
+                print(f"Arrêt anticipé à l'époque {epoch} pour éviter le surapprentissage.")
                 break
 
-    # Restauration des meilleurs poids trouvés avant le surapprentissage
+    # 3. Restauration des meilleurs poids trouvés
     if best_weights:
         model.load_state_dict(best_weights)
         
-    return best_test_loss
+    return model
 
 def run_evaluation():
     """Phase 6 : Comparaison finale du Log-loss sur la même séparation temporelle."""
@@ -100,10 +92,10 @@ def run_evaluation():
         sklearn_loss = log_loss(y_true, sklearn_model.predict_proba(X_sk_test))
 
     print("2. Entraînement du LSTM (Stats-only sur 150 epochs)...")
-    lstm_stats_loss = train_eval_lstm(X_tab_train, X_tab_test, X_text_train, X_text_test, y_train, y_test, use_text=False)
+    lstm_stats_loss = train_multimodal_lstm(X_tab_train, X_tab_test, X_text_train, X_text_test, y_train, y_test, use_text=False)
     
     print("3. Entraînement du Multimodal LSTM (Stats + Texte sur 150 epochs)...")
-    lstm_multi_loss = train_eval_lstm(X_tab_train, X_tab_test, X_text_train, X_text_test, y_train, y_test, use_text=True)
+    lstm_multi_loss = train_multimodal_lstm(X_tab_train, X_tab_test, X_text_train, X_text_test, y_train, y_test, use_text=True)
     
     print("\n" + "="*50)
     print("🏆 RÉSULTATS FINAUX (PHASE 6) : LOG-LOSS")

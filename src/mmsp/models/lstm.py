@@ -13,30 +13,28 @@ class MultimodalNet(nn.Module):
     def __init__(self, tabular_dim, text_dim, hidden_dim=24, num_classes=3):
         super(MultimodalNet, self).__init__()
         
-        # 1. Analyseur de statistiques (LSTM) avec dropout interne
+        # Le LSTM gère la séquence tabulaire
         self.lstm = nn.LSTM(tabular_dim, hidden_dim, batch_first=True)
         
-        # 2. Analyseur de texte (Réseau Dense)
+        # Le réseau dense gère le texte avec un fort Dropout
         self.text_fc = nn.Sequential(
             nn.Linear(text_dim, hidden_dim),
             nn.ReLU(),
-            nn.Dropout(0.4) # Dropout renforcé pour le texte
+            nn.Dropout(0.4) # Désactive 40% des neurones aléatoirement
         )
         
-        # 3. Fusion et classification
+        # La fusion ajoute aussi du Dropout avant la classification
         self.classifier = nn.Sequential(
             nn.Linear(hidden_dim * 2, hidden_dim),
             nn.ReLU(),
-            nn.Dropout(0.4), # Dropout sur la fusion
+            nn.Dropout(0.4), # Désactive 40% des neurones aléatoirement
             nn.Linear(hidden_dim, num_classes)
         )
 
     def forward(self, tabular_x, text_x):
         lstm_out, (hn, cn) = self.lstm(tabular_x)
         tab_features = hn[-1] 
-        
         txt_features = self.text_fc(text_x)
-        
         combined = torch.cat((tab_features, txt_features), dim=1)
         return self.classifier(combined)
 
