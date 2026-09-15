@@ -4,9 +4,9 @@
 # is allowed to compute its own split.
 
 split:
-  train_before: "2023-01-01"   # train: all matches strictly before this date
-  val_year: 2023               # validation: full 2023 calendar year
-  test_years: [2024, 2025]     # test: 2024-2025 — the only years any reported metric may use
+  method: "sequential"
+  train_ratio: 0.80      # train: chronologically first 80% of matches
+  test_ratio: 0.20       # test: chronologically last 20% of matches (used for backtest)
 
 paths:
   raw_matches: "data/raw/matches_PL.csv"
