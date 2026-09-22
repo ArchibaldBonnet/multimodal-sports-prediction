@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import joblib
 from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
@@ -33,9 +34,11 @@ def train_sklearn_baseline():
     # 1. Définition de la cible et des variables explicatives (features)
     y = create_target(df)
     features = [
-        'Home_AvgScored_5', 'Home_AvgConceded_5', 'Home_Points_5',
-        'Away_AvgScored_5', 'Away_AvgConceded_5', 'Away_Points_5'
-    ]
+    'Home_AvgScored_5', 'Home_AvgConceded_5', 'Home_Points_5', 
+    'Away_AvgScored_5', 'Away_AvgConceded_5', 'Away_Points_5',
+    'Home_Shots_5', 'Home_ShotsTarget_5', 'Home_Corners_5', 
+    'Away_Shots_5', 'Away_ShotsTarget_5', 'Away_Corners_5'
+]
     X = df[features]
     
     # 2. Temporal Split (Séparation Temporelle)
@@ -51,7 +54,7 @@ def train_sklearn_baseline():
     
     # 3. Création et entraînement du pipeline (Standardisation + Régression Logistique)
     # On limite les itérations et on ajoute un peu de régularisation (C=0.1) pour éviter le surapprentissage
-    model = make_pipeline(StandardScaler(), LogisticRegression(multi_class='multinomial', max_iter=1000, C=0.1))
+    model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000, C=0.1, random_state=42))
     model.fit(X_train, y_train)
     
     # 4. Évaluation (Log-loss et Précision)
@@ -66,5 +69,13 @@ def train_sklearn_baseline():
     print(f"Log-loss (Plus c'est proche de 0, mieux c'est) : {loss:.4f}")
     print(f"Précision (Accuracy) : {acc*100:.2f}%")
     print("==================================")
+
+    models_dir = Path("models")
+    models_dir.mkdir(exist_ok=True)
+    
+    # Sauvegarde du modèle sur le disque
+    save_path = models_dir / "baseline.pkl"
+    joblib.dump(model, save_path)
+    print(f"Modèle sauvegardé dans : {save_path}")
     
     return model

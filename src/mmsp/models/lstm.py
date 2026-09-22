@@ -39,7 +39,8 @@ class MultimodalNet(nn.Module):
         return self.classifier(combined)
 
 # --- SCRIPT D'ENTRAÎNEMENT ---
-def train_multimodal_lstm():
+def train_multimodal_lstm(X_tab_train, X_tab_test, X_text_train, X_text_test, y_train, y_test, use_text=True):
+
     dataset_path = Path("data/dataset.parquet")
     df = pd.read_parquet(dataset_path)
     
@@ -48,7 +49,12 @@ def train_multimodal_lstm():
     y = torch.tensor(np.select(conditions, [0, 1, 2], default=np.nan), dtype=torch.long)
     
     # Préparation Statistiques
-    features = ['Home_AvgScored_5', 'Home_AvgConceded_5', 'Home_Points_5', 'Away_AvgScored_5', 'Away_AvgConceded_5', 'Away_Points_5']
+    features = [
+    'Home_AvgScored_5', 'Home_AvgConceded_5', 'Home_Points_5', 
+    'Away_AvgScored_5', 'Away_AvgConceded_5', 'Away_Points_5',
+    'Home_Shots_5', 'Home_ShotsTarget_5', 'Home_Corners_5', 
+    'Away_Shots_5', 'Away_ShotsTarget_5', 'Away_Corners_5'
+]
     X_tab = StandardScaler().fit_transform(df[features])
     X_tab = torch.tensor(X_tab, dtype=torch.float32).unsqueeze(1) # Ajout de la dimension temps pour le LSTM
     
@@ -61,9 +67,18 @@ def train_multimodal_lstm():
     X_tab_train, X_tab_test = X_tab[:split_idx], X_tab[split_idx:]
     X_text_train, X_text_test = X_text[:split_idx], X_text[split_idx:]
     y_train, y_test = y[:split_idx], y[split_idx:]
+
+    if not use_text:
+        print("Mode 'Stats-only' : Les embeddings textuels sont ignorés (mis à zéro).")
+        X_text_train = torch.zeros_like(X_text_train)
+        X_text_test = torch.zeros_like(X_text_test)
     
     # Initialisation
-    model = MultimodalNet(tabular_dim=len(features), text_dim=X_text.shape[1])
+    tabular_dim = X_tab_train.shape[-1]
+    text_dim = X_text_train.shape[-1]
+    
+    # Le réseau s'initialise avec 12 portes d'entrée au lieu de 6
+    model = MultimodalNet(tabular_dim=tabular_dim, text_dim=text_dim)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.005)
     
@@ -96,3 +111,5 @@ def train_multimodal_lstm():
     Path("reports").mkdir(exist_ok=True)
     plt.savefig("reports/lstm_loss_curves.png")
     print("\nCourbes sauvegardées dans reports/lstm_loss_curves.png")
+
+    return model

@@ -6,7 +6,7 @@ import torch.optim as optim
 from pathlib import Path
 from sklearn.preprocessing import StandardScaler
 from src.mmsp.models.baseline import train_sklearn_baseline
-from src.mmsp.models.lstm import MultimodalNet
+from src.mmsp.models.lstm import train_multimodal_lstm,MultimodalNet
 from src.mmsp.nlp import get_text_features
 
 def get_prepared_data():
@@ -33,47 +33,6 @@ def get_prepared_data():
         X_text[:split_idx], X_text[split_idx:],
         y[:split_idx], y[split_idx:]
     )
-
-def train_multimodal_lstm(model, X_tab_train, X_text_train, y_train, X_tab_test, X_text_test, y_test):
-    criterion = nn.CrossEntropyLoss()
-    
-    # 1. Weight Decay : pénalité L2 pour lisser les prédictions
-    optimizer = optim.Adam(model.parameters(), lr=0.003, weight_decay=1e-3)
-    
-    best_test_loss = float('inf')
-    patience = 10 
-    patience_counter = 0
-    best_weights = None
-
-    for epoch in range(150):
-        # Mode entraînement
-        model.train()
-        optimizer.zero_grad()
-        loss = criterion(model(X_tab_train, X_text_train), y_train)
-        loss.backward()
-        optimizer.step()
-        
-        # Mode évaluation
-        model.eval()
-        with torch.no_grad():
-            test_loss = criterion(model(X_tab_test, X_text_test), y_test).item()
-            
-        # 2. Early Stopping : on sauvegarde le meilleur modèle
-        if test_loss < best_test_loss:
-            best_test_loss = test_loss
-            patience_counter = 0
-            best_weights = model.state_dict().copy()
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                print(f"Arrêt anticipé à l'époque {epoch} pour éviter le surapprentissage.")
-                break
-
-    # 3. Restauration des meilleurs poids trouvés
-    if best_weights:
-        model.load_state_dict(best_weights)
-        
-    return model
 
 def run_evaluation():
     """Phase 6 : Comparaison finale du Log-loss sur la même séparation temporelle."""

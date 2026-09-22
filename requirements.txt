@@ -9,3 +9,6 @@ scikit-learn
 torch
 transformers
 pytest
+matplotlib
+sentence-transformers
+tabulate
